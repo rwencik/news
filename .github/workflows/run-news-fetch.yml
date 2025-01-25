@@ -9,7 +9,7 @@ jobs:
 
     steps:
     - name: Pull Docker image
-      run: docker pull rafaelwencik/nginx
+      run: docker pull rwencik/nginx
 
     - name: Run the container with environment variables
       env:
@@ -22,4 +22,4 @@ jobs:
                    -e EMAIL_SENDER="${EMAIL_SENDER}" \
                    -e EMAIL_PASSWORD="${EMAIL_PASSWORD}" \
                    -e EMAIL_RECIPIENTS="${EMAIL_RECIPIENTS}" \
-                   rafaelwencik/nginx
+                   rwencik/nginx

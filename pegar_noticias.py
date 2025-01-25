@@ -37,11 +37,13 @@ translator = Translator()
 EMAIL_SENDER = os.getenv("EMAIL_SENDER", "your_email@gmail.com")
 EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD", "your_email_password")
 EMAIL_RECIPIENTS = os.getenv('EMAIL_RECIPIENTS', '').split(',')
+RSS_FEED_URLS = os.getenv('RSS_FEED_URL', '').split(',')
 
 if isinstance(EMAIL_RECIPIENTS, str):
     EMAIL_RECIPIENTS = [EMAIL_RECIPIENTS]
 
-RSS_FEED_URLS = os.getenv("RSS_FEED_URL", '["https://rss.jpost.com/rss/rssfeedsheadlines.aspx"]').strip('[]').replace('"', '').split(',')
+if isinstance(RSS_FEED_URLS, str):
+    RSS_FEED_URLS = [RSS_FEED_URLS]
 
 def fetch_rss_news():
     """Fetch news articles from a list of RSS feeds."""
