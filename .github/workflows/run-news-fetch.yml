@@ -1,0 +1,26 @@
+name: Run News Fetch
+
+on:
+  schedule:
+    - cron: "0 6,18 * * *"
+
+jobs:
+  run-news-fetch:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Pull Docker image
+      run: docker pull rafaelwencik/nginx
+
+    - name: Run the container with environment variables
+      env:
+        RSS_FEED_URL: ${{ secrets.RSS_FEED_URL }}
+        EMAIL_SENDER: ${{ secrets.EMAIL_SENDER }}
+        EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
+        EMAIL_RECIPIENTS: ${{ secrets.EMAIL_RECIPIENTS }}
+      run: |
+        docker run -e RSS_FEED_URL="${RSS_FEED_URL}" \
+                   -e EMAIL_SENDER="${EMAIL_SENDER}" \
+                   -e EMAIL_PASSWORD="${EMAIL_PASSWORD}" \
+                   -e EMAIL_RECIPIENTS="${EMAIL_RECIPIENTS}" \
+                   rafaelwencik/nginx
