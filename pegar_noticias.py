@@ -76,23 +76,23 @@ def fetch_rss_news():
     logger.info(f"Fetched {len(news_list)} articles from {len(RSS_FEED_URLS)} feeds.")
     return news_list
 
-def summarize_text(text, max_summary_length=32):
-    summarizer = pipeline("summarization", model="facebook/bart-large-cnn")
-    
-    # Ensure text is not empty or None
+def summarize_text(text, max_summary_length=512, summarize=True):
     if not text or len(text.strip()) == 0:
         return "No content to summarize"
 
-    # Adjust max_length dynamically based on the input length
-    max_length = max(min(len(text.split()), max_summary_length), 10)  # Ensure at least 10 tokens
-    min_length = max(5, max_length // 2)  # Ensure reasonable min length
+    if not summarize:
+        return text
+
+    summarizer = pipeline("summarization", model="facebook/bart-large-cnn")
+    max_length = max(min(len(text.split()), max_summary_length), 50)
+    min_length = max(25, max_length // 2)
     
     try:
         summary = summarizer(text, max_length=max_length, min_length=min_length, do_sample=False)[0]["summary_text"]
         return summary
     except Exception as e:
         logger.error(f"Error summarizing text: {str(e)}")
-        return "Error generating summary"
+        return text
 
 def translate_text(texto):
     try:
@@ -100,38 +100,30 @@ def translate_text(texto):
     except Exception as e:
         logger.error(f"Erro na tradução: {str(e)}")
         return texto
-
+    
 def fetch_article_content(url):
-    """Fetch the relevant article content from the URL, avoiding repeated sections."""
     try:
         response = requests.get(url)
         if response.status_code != 200:
-            raise Exception(f"Failed to load article page {url}")
+            raise Exception(f"Failed to load article page {url}. Status code: {response.status_code}")
         
         soup = BeautifulSoup(response.content, 'html.parser')
         
-        # Locate the specific container for the article body
-        article_body = soup.find('section', class_='article-inner-content-breaking-news')
-        
+        article_body = soup.find('section', itemprop='articleBody')
         if not article_body:
-            logger.warning(f"Could not find the article content for {url}")
             return None
-        
-        # Extract unique paragraphs
-        seen = set()
-        content = []
-        
-        for p in article_body.find_all('p', recursive=False):  # Only direct <p> tags within article body
+
+        paragraphs = article_body.find_all('p', recursive=True)
+
+        relevant_content = []
+        for p in enumerate(paragraphs):
             text = p.get_text(strip=True)
-            normalized_text = text.lower().replace(' ', '')  # Normalize to detect duplicates
-            if text and normalized_text not in seen:
-                content.append(text)
-                seen.add(normalized_text)
+            if len(text) > 150:
+                if any(keyword in text.lower() for keyword in ["collapsed", "hostage", "released", "injured"]):
+                    relevant_content.append(text)
         
-        # Combine unique paragraphs into a single string
-        return "\n".join(content).strip()
+        return "\n".join(relevant_content).strip()
     except Exception as e:
-        logger.error(f"Error fetching content for {url}: {str(e)}")
         return None
 
 def filter_news(news_list, start_time, end_time):
@@ -145,7 +137,6 @@ def filter_news(news_list, start_time, end_time):
         if start_time <= news["published"] <= end_time:
             logger.info(f"Article is within the time range: {news['title']}")
             
-            # Fetch and add the article content only for relevant news
             article_content = summarize_text(translate_text(fetch_article_content(news["link"])))
             news["content"] = article_content
             
@@ -221,12 +212,8 @@ def main():
     # Fetch news, filter by time range, and send email
     news_list = fetch_rss_news()
     relevant_news = filter_news(news_list, start_time, end_time)
-
     logger.info(f"Relevant news: {relevant_news}")
-#    print(f"Relevant news: {relevant_news}")
     send_email(relevant_news)
-
-
 
 if __name__ == "__main__":
     main()
