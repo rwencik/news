@@ -76,23 +76,23 @@ def fetch_rss_news():
     logger.info(f"Fetched {len(news_list)} articles from {len(RSS_FEED_URLS)} feeds.")
     return news_list
 
-def summarize_text(text, max_summary_length=32):
-    summarizer = pipeline("summarization", model="facebook/bart-large-cnn")
-    
-    # Ensure text is not empty or None
+def summarize_text(text, max_summary_length=512, summarize=True):
     if not text or len(text.strip()) == 0:
         return "No content to summarize"
 
-    # Adjust max_length dynamically based on the input length
-    max_length = max(min(len(text.split()), max_summary_length), 10)  # Ensure at least 10 tokens
-    min_length = max(5, max_length // 2)  # Ensure reasonable min length
+    if not summarize:
+        return text
+
+    summarizer = pipeline("summarization", model="facebook/bart-large-cnn")
+    max_length = max(min(len(text.split()), max_summary_length), 50)
+    min_length = max(25, max_length // 2)
     
     try:
         summary = summarizer(text, max_length=max_length, min_length=min_length, do_sample=False)[0]["summary_text"]
         return summary
     except Exception as e:
         logger.error(f"Error summarizing text: {str(e)}")
-        return "Error generating summary"
+        return text
 
 def translate_text(texto):
     try:
@@ -223,10 +223,7 @@ def main():
     relevant_news = filter_news(news_list, start_time, end_time)
 
     logger.info(f"Relevant news: {relevant_news}")
-#    print(f"Relevant news: {relevant_news}")
     send_email(relevant_news)
-
-
 
 if __name__ == "__main__":
     main()
