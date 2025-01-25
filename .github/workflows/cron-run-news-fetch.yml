@@ -1,0 +1,31 @@
+name: Cron Run News Fetch
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 6 * * *"
+    - cron: "0 18 * * *"
+
+jobs:
+  run-news-fetch:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Log in to Docker Hub
+      run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+
+    - name: Pull Docker image
+      run: docker pull rwencik/news
+
+    - name: Run the container with environment variables
+      env:
+        RSS_FEED_URL: ${{ secrets.RSS_FEED_URL }}
+        EMAIL_SENDER: ${{ secrets.EMAIL_SENDER }}
+        EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
+        EMAIL_RECIPIENTS: ${{ secrets.EMAIL_RECIPIENTS }}
+      run: |
+        docker run -e RSS_FEED_URL="${RSS_FEED_URL}" \
+                   -e EMAIL_SENDER="${EMAIL_SENDER}" \
+                   -e EMAIL_PASSWORD="${EMAIL_PASSWORD}" \
+                   -e EMAIL_RECIPIENTS="${EMAIL_RECIPIENTS}" \
+                   rwencik/news
