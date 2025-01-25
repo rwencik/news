@@ -3,6 +3,7 @@ name: Run News Fetch
 on:
   schedule:
     - cron: "0 6,18 * * *"
+  workflow_dispatch:
 
 jobs:
   run-news-fetch:
