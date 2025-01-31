@@ -197,17 +197,16 @@ def send_email(news_list):
         # Append the title, summary, and link to the email body
         email_body += f"{formatted_title}<br>{summary}<br><a href='{news['link']}'>Ver mais</a><br><br>"
 
-    # Build the email
-    msg = MIMEMultipart()
-    msg["From"] = EMAIL_SENDER
-    msg["Subject"] = "Últimas notícias - https://www.jpost.com"
-    msg.attach(MIMEText(email_body, "html"))  # Set email content type to HTML
 
     try:
         with smtplib.SMTP("smtp.gmail.com", 587) as server:
             server.starttls()
             server.login(EMAIL_SENDER, EMAIL_PASSWORD)
             for email in EMAIL_RECIPIENTS:
+                msg = MIMEMultipart()
+                msg["From"] = EMAIL_SENDER
+                msg["Subject"] = "Últimas notícias - https://www.jpost.com"
+                msg.attach(MIMEText(email_body, "html"))
                 msg["To"] = email
                 server.sendmail(EMAIL_SENDER, email, msg.as_string())
             logger.info("Email sent successfully!")
