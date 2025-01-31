@@ -212,7 +212,7 @@ def send_email(news_list):
             server.starttls()
             server.login(EMAIL_SENDER, EMAIL_PASSWORD)
             for email in EMAIL_RECIPIENTS:
-                msg["To"] = ", ".join(email)
+                msg["To"] = email
                 server.sendmail(EMAIL_SENDER, email, msg.as_string())
             logger.info("Email sent successfully!")
             print("Email enviado com sucesso!")

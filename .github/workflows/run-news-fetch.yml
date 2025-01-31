@@ -45,13 +45,11 @@ jobs:
         RSS_FEED_URL: ${{ secrets.RSS_FEED_URL }}
         EMAIL_SENDER: ${{ secrets.EMAIL_SENDER }}
         EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
-        EMAIL_RECIPIENTS: ${{ vars.EMAIL_RECIPIENTS }}
+        EMAIL_RECIPIENTS: ${{ secrets.EMAIL_RECIPIENTS }}
       run: |
-        echo "::add-mask::$EMAIL_RECIPIENTS"
-        
         docker run --network network \
                    -e RSS_FEED_URL="${RSS_FEED_URL}" \
                    -e EMAIL_SENDER="${EMAIL_SENDER}" \
                    -e EMAIL_PASSWORD="${EMAIL_PASSWORD}" \
                    -e EMAIL_RECIPIENTS="${EMAIL_RECIPIENTS}" \
-                   rwencik/news > /dev/null 2>&1
+                   rwencik/news
