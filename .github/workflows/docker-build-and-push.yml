@@ -20,8 +20,16 @@ jobs:
 
     # Build the Docker image
     - name: Build Docker image
-      run: docker build -t rwencik/news:latest .
+      run: docker build -t rwencik/news:latest pegar-noticias/
+
+    # Build the Docker image
+    - name: Build Docker image
+      run: docker build -t rwencik/summarize-pt:latest ai/
 
     # Push the Docker image to Docker Hub
     - name: Push Docker image
       run: docker push rwencik/news:latest
+
+    # Push the Docker image to Docker Hub
+    - name: Push Docker image
+      run: docker push rwencik/summarize-pt:latest

@@ -76,56 +76,77 @@ def fetch_rss_news():
     logger.info(f"Fetched {len(news_list)} articles from {len(RSS_FEED_URLS)} feeds.")
     return news_list
 
-def summarize_text(text, max_summary_length=512, summarize=True):
+def summarize_text(text):
+    """
+    Sends text to the AI summarization and translation service and returns the translated summary.
+    """
     if not text or len(text.strip()) == 0:
         return "No content to summarize"
 
-    if not summarize:
-        return text
-
-    summarizer = pipeline("summarization", model="facebook/bart-large-cnn")
-    max_length = max(min(len(text.split()), max_summary_length), 50)
-    min_length = max(25, max_length // 2)
+    ai_service_url = "http://summarize_service:8000/process-news"
+    headers = {"Content-Type": "application/json"}
     
+    payload = {
+        "text": text,
+        "max_summary_length": 80,  # Adjust length as needed
+        "min_summary_length": 20
+    }
+
     try:
-        summary = summarizer(text, max_length=max_length, min_length=min_length, do_sample=False)[0]["summary_text"]
-        return summary
-    except Exception as e:
-        logger.error(f"Error summarizing text: {str(e)}")
-        return text
+        response = requests.post(ai_service_url, json=payload, headers=headers)
+        response.raise_for_status()  # Raise an error for non-200 responses
+        
+        result = response.json()
+        if "brazilian_translation" in result:
+            return result["brazilian_translation"]
+        else:
+            return "Error: Unexpected response format"
+
+    except requests.exceptions.RequestException as e:
+        return f"Error: {str(e)}"
 
 def translate_text(texto):
     try:
-        return translator.translate(texto, dest='pt').text
+        traduzido = translator.translate(texto, dest='pt').text
+        return traduzido
+
     except Exception as e:
-        logger.error(f"Erro na tradução: {str(e)}")
+        erro = logger.error(f"Erro na tradução: {str(e)}")
+        print(erro)
         return texto
     
 def fetch_article_content(url):
+    """
+    Fetches the content of an article from a given URL and merges it into a single string.
+    Deduplicates paragraphs and handles errors gracefully.
+
+    :param url: The URL of the article to fetch.
+    :return: A single merged string of the article's content.
+    """
     try:
-        response = requests.get(url)
-        if response.status_code != 200:
-            raise Exception(f"Failed to load article page {url}. Status code: {response.status_code}")
+        response = requests.get(url, timeout=10)
+        response.raise_for_status()
         
-        soup = BeautifulSoup(response.content, 'html.parser')
-        
-        article_body = soup.find('section', itemprop='articleBody')
-        if not article_body:
-            return None
+        soup = BeautifulSoup(response.text, 'html.parser')
 
-        paragraphs = article_body.find_all('p', recursive=True)
+        # Extract paragraphs using common HTML tags for news content
+        paragraphs = [p.get_text(strip=True) for p in soup.find_all('p') if p.get_text(strip=True)]
 
-        relevant_content = []
-        for p in enumerate(paragraphs):
-            text = p.get_text(strip=True)
-            if len(text) > 150:
-                if any(keyword in text.lower() for keyword in ["collapsed", "hostage", "released", "injured"]):
-                    relevant_content.append(text)
-        
-        return "\n".join(relevant_content).strip()
+        # Deduplicate paragraphs and merge into one string
+        unique_paragraphs = list(dict.fromkeys(paragraphs))  # Removes duplicates while preserving order
+        merged_content = "\n\n".join(unique_paragraphs)
+
+        print(f"Fetched: {url}")
+        return merged_content
+
+    except requests.exceptions.RequestException as e:
+        print(f"Error fetching the article from {url}: {e}")
+        return ""
+
     except Exception as e:
-        return None
-
+        print(f"Unexpected error while processing {url}: {e}")
+        return ""
+    
 def filter_news(news_list, start_time, end_time):
     """Filter news articles by the specified time range and fetch content."""
     logger.info(f"Filtering news between {start_time} and {end_time} (UTC)")
@@ -136,10 +157,13 @@ def filter_news(news_list, start_time, end_time):
         logger.info(f"Checking article: {news['title']} published at {news['published']}")
         if start_time <= news["published"] <= end_time:
             logger.info(f"Article is within the time range: {news['title']}")
+
+            # Fetch and process content
+            article_content = fetch_article_content(news["link"])
+            summarized_content = summarize_text(article_content)
             
-            article_content = summarize_text(translate_text(fetch_article_content(news["link"])))
-            news["content"] = article_content
-            
+            # Store processed content
+            news["content"] = summarized_content
             filtered_news.append(news)
         else:
             logger.info(f"Article is outside the time range: {news['title']}")
@@ -191,6 +215,8 @@ def send_email(news_list):
             for email in EMAIL_RECIPIENTS:
                 server.sendmail(EMAIL_SENDER, email, msg.as_string())
             logger.info("Email sent successfully!")
+            print("Email enviado com sucesso!")
+        
     except Exception as e:
         logger.error(f"Error sending email: {str(e)}")
 
@@ -200,7 +226,7 @@ def main():
     logger.info(f"Current local time in Jerusalem: {now}")
 
     # Define the time range for filtering news
-    if now.hour >= 8 and now.hour < 20:  # If it's between 8 AM and 8 PM
+    if now.hour >= 7 and now.hour < 20:  # If it's between 8 AM and 8 PM
         start_time = (now - timedelta(days=1)).replace(hour=20, minute=0, second=0, microsecond=0).astimezone(ZoneInfo("Asia/Jerusalem"))
     else:  # If it's between 8 PM and 8 AM
         start_time = now.replace(hour=8, minute=0, second=0, microsecond=0).astimezone(ZoneInfo("Asia/Jerusalem"))
