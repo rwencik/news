@@ -226,7 +226,7 @@ def main():
     logger.info(f"Current local time in Jerusalem: {now}")
 
     # Define the time range for filtering news
-    if now.hour >= 7 and now.hour < 20:  # If it's between 8 AM and 8 PM
+    if now.hour >= 8 and now.hour < 20:  # If it's between 8 AM and 8 PM
         start_time = (now - timedelta(days=1)).replace(hour=20, minute=0, second=0, microsecond=0).astimezone(ZoneInfo("Asia/Jerusalem"))
     else:  # If it's between 8 PM and 8 AM
         start_time = now.replace(hour=8, minute=0, second=0, microsecond=0).astimezone(ZoneInfo("Asia/Jerusalem"))
