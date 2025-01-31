@@ -12,10 +12,6 @@ from email.mime.multipart import MIMEMultipart
 import feedparser
 from googletrans import Translator
 from bs4 import BeautifulSoup
-from transformers import pipeline, logging as transformers_logging
-
-# Set logging verbosity for transformers to error
-transformers_logging.set_verbosity_error()
 
 # Logging setup
 log_directory = "/app/logs"
