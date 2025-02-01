@@ -79,28 +79,22 @@ def summarize_text(text):
     if not text or len(text.strip()) == 0:
         return "No content to summarize"
 
-    prompt = f"Summarize and translate to Portuguese: {text} \n\nOutput only the summarized translation, nothing else:"
-
-    ai_service_url = "http://localhost:11434/api/generate"
+    ai_service_url = "http://summarize_service:8000/process-news"
     headers = {"Content-Type": "application/json"}
     
     payload = {
-        "model": "deepseek-r1:1.5b",
-        "prompt": prompt,
-        "stream": False,
-        "temperature": 0,
-        "max_tokens": 50
+        "text": text,
+        "max_summary_length": 80,  # Adjust length as needed
+        "min_summary_length": 20
     }
 
     try:
         response = requests.post(ai_service_url, json=payload, headers=headers)
         response.raise_for_status()  # Raise an error for non-200 responses
-
-        result = response.json()
         
-        # Extract the translated summary from the correct key
-        if "response" in result:
-            return result["response"]
+        result = response.json()
+        if "brazilian_translation" in result:
+            return result["brazilian_translation"]
         else:
             return "Error: Unexpected response format"
 
