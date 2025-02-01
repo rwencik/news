@@ -1,19 +1,33 @@
-# Use a lightweight Python base image
-FROM python:3.9-slim
+FROM ubuntu:22.04
 
-# Set working directory
-WORKDIR /app
+# Set non-interactive mode
+ENV DEBIAN_FRONTEND=noninteractive
 
-# Install dependencies
-RUN pip install torch transformers fastapi uvicorn sentencepiece
+# Install required dependencies
+RUN apt update && apt install -y \
+    curl \
+    git \
+    wget \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
 
-# Pre-download models to avoid runtime errors inside the container
-RUN python -c "from transformers import pipeline; \
-    pipeline('summarization', model='facebook/bart-large-cnn'); \
-    pipeline('translation', model='Helsinki-NLP/opus-mt-en-ROMANCE')"
+# Install Ollama
+RUN curl -fsSL https://ollama.com/install.sh | sh
 
-# Copy application code
-COPY app.py .
+# Create Ollama model directory
+RUN mkdir -p /root/.ollama/models
 
-# Expose the FastAPI service
-CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000"]
+# Copy the script to wait for Ollama and download the model
+COPY download-model.sh /download-model.sh
+COPY entrypoint.sh /entrypoint.sh
+
+RUN chmod +x /download-model.sh && /download-model.sh
+
+# Expose Ollama API port
+EXPOSE 11434
+
+# Copy and set up entrypoint script
+RUN chmod +x /entrypoint.sh
+
+# Use the fixed entrypoint to restart Ollama with the pre-downloaded model
+CMD ["/entrypoint.sh"]
