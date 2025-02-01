@@ -87,7 +87,7 @@ def summarize_text(text):
     payload = {
         "model": "deepseek-r1:1.5b",
         "prompt": prompt,
-        "stream": False,  # Ensure this is a boolean, not a string
+        "stream": False,
         "temperature": 0,
         "max_tokens": 50
     }
