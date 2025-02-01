@@ -12,7 +12,6 @@ from email.mime.multipart import MIMEMultipart
 import feedparser
 from googletrans import Translator
 from bs4 import BeautifulSoup
-import re
 
 # Logging setup
 log_directory = "/app/logs"
@@ -88,7 +87,7 @@ def summarize_text(text):
     payload = {
         "model": "deepseek-r1:1.5b",
         "prompt": prompt,
-        "stream": False,  # Ensure this is a boolean, not a string
+        "stream": False,
         "temperature": 0,
         "max_tokens": 50
     }
@@ -99,17 +98,9 @@ def summarize_text(text):
 
         result = response.json()
         
-        # Extract the response text
+        # Extract the translated summary from the correct key
         if "response" in result:
-            clean_response = result["response"].strip()
-
-            # Remove any unwanted formatting, <think> tags, or markdown formatting
-            clean_response = re.sub(r'<.*?>', '', clean_response)  # Remove any HTML-like tags
-            clean_response = re.sub(r'\*\*(.*?)\*\*', r'\1', clean_response)  # Remove bold markdown
-            clean_response = clean_response.replace('"', '').replace('\n', ' ').strip()  # Clean up text
-
-            return clean_response
-
+            return result["response"]
         else:
             return "Error: Unexpected response format"
 
