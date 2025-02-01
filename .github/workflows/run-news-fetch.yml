@@ -8,36 +8,49 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+    # Extract branch name and sanitize it for Docker tag
+    - name: Set branch name as Docker tag
+      run: echo "BRANCH_TAG=$(echo ${GITHUB_REF#refs/heads/} | tr '/' '-')" >> $GITHUB_ENV
+
+    # Ensure "main" branch uses "latest" tag
+    - name: Determine Docker Tag
+      run: |
+        if [ "${{ env.BRANCH_TAG }}" == "main" ]; then
+          echo "DOCKER_TAG=latest" >> $GITHUB_ENV
+        else
+          echo "DOCKER_TAG=${{ env.BRANCH_TAG }}" >> $GITHUB_ENV
+        fi
+
     - name: Log in to Docker Hub
       run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
 
     - name: Pull Docker Images
       run: |
-        docker pull rwencik/summarize-pt
-        docker pull rwencik/news
+        docker pull rwencik/deepseek:${{ env.DOCKER_TAG }}
+        docker pull rwencik/news:${{ env.DOCKER_TAG }}
 
     - name: Create a Custom Docker Network
       run: docker network create network
 
     - name: Start Summarization Service
       run: |
-        docker run -d --name summarize_service \
+        docker run -d --name deepseek \
                    --network network \
-                   -p 8000:8000 \
-                   rwencik/summarize-pt
+                   -p 8000:11434 \
+                   rwencik/deepseek:${{ env.DOCKER_TAG }}
 
     - name: Wait for Summarization Service to Be Ready
       run: |
-        echo "Waiting for summarize-pt service to start..."
+        echo "Waiting for deepseek service to start..."
         for i in {1..30}; do
-          if curl -s http://localhost:8000/docs > /dev/null; then
-            echo "Summarization service is up!"
+          if curl -s http://localhost:8000/api/tags > /dev/null; then
+            echo "deepseek service is up!"
             exit 0
           fi
           echo "Waiting..."
           sleep 3
         done
-        echo "Summarization service failed to start"
+        echo "deepseek service failed to start"
         exit 1
 
     - name: Run News Fetcher
@@ -52,4 +65,4 @@ jobs:
                    -e EMAIL_SENDER="${EMAIL_SENDER}" \
                    -e EMAIL_PASSWORD="${EMAIL_PASSWORD}" \
                    -e EMAIL_RECIPIENTS="${EMAIL_RECIPIENTS}" \
-                   rwencik/news
+                   rwencik/news:${{ env.DOCKER_TAG }}
