@@ -248,7 +248,7 @@ def main():
     # Fetch news, filter by time range, and send email
     news_list = fetch_rss_news()
     relevant_news = filter_news(news_list, start_time, end_time)
-    logger.info(f"Relevant news: {relevant_news}")
+    logger.info(f"Relevant news:  {relevant_news}")
     send_email(relevant_news)
 
 if __name__ == "__main__":
