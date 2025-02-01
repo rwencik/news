@@ -16,31 +16,31 @@ jobs:
 
     - name: Pull Docker Images
       run: |
-        docker pull rwencik/deepseek
+        docker pull rwencik/summarize-pt
         docker pull rwencik/news
 
     - name: Create a Custom Docker Network
       run: docker network create network
 
-    - name: Start deepseek Service
+    - name: Start Summarization Service
       run: |
-        docker run -d --name deepseek \
+        docker run -d --name summarize_service \
                    --network network \
-                   -p 8000:11434 \
-                   rwencik/deepseek
+                   -p 8000:8000 \
+                   rwencik/summarize-pt
 
-    - name: Wait for deepseek Service to Be Ready
+    - name: Wait for Summarization Service to Be Ready
       run: |
-        echo "Waiting for deepseek service to start..."
+        echo "Waiting for summarize-pt service to start..."
         for i in {1..30}; do
-          if curl -s http://localhost:8000/api/tags > /dev/null; then
-            echo "deepseek service is up!"
+          if curl -s http://localhost:8000/docs > /dev/null; then
+            echo "Summarization service is up!"
             exit 0
           fi
           echo "Waiting..."
           sleep 3
         done
-        echo "deepseek service failed to start"
+        echo "Summarization service failed to start"
         exit 1
 
     - name: Run News Fetcher
