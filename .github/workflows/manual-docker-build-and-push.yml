@@ -30,7 +30,7 @@ jobs:
 
     - name: Build and Push DeepSeek Docker image
       run: |
-        docker build -t rwencik/deepseek:${{ env.BRANCH_TAG }} ai/
+        docker build -t rwencik/deepseek:${{ env.BRANCH_TAG }} deepseek/
         [ "${{ env.BRANCH_TAG }}" == "main" ] && docker tag rwencik/deepseek:${{ env.BRANCH_TAG }} rwencik/deepseek:latest
         docker push rwencik/deepseek:${{ env.BRANCH_TAG }}
         [ "${{ env.BRANCH_TAG }}" == "main" ] && docker push rwencik/deepseek:latest

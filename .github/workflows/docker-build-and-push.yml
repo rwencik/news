@@ -24,7 +24,7 @@ jobs:
 
     # Build the Docker image
     - name: Build Docker image
-      run: docker build -t rwencik/deepseek:latest ai/
+      run: docker build -t rwencik/deepseek:latest deepseek/
 
     # Push the Docker image to Docker Hub
     - name: Push Docker image
