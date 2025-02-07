@@ -11,6 +11,6 @@ until curl -s http://localhost:11434/api/tags > /dev/null; do
 done
 
 echo "Ollama is ready! Pulling DeepSeek model..."
-ollama pull deepseek-r1:1.5b
+ollama pull deepseek-r1:8b
 
 echo "Model downloaded successfully!"
