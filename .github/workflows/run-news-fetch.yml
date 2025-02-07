@@ -39,20 +39,6 @@ jobs:
                    -p 8000:11434 \
                    rwencik/deepseek:${{ env.DOCKER_TAG }}
 
-    - name: Wait for Summarization Service to Be Ready
-      run: |
-        echo "Waiting for deepseek service to start..."
-        for i in {1..30}; do
-          if curl -s http://localhost:8000/api/tags > /dev/null; then
-            echo "deepseek service is up!"
-            exit 0
-          fi
-          echo "Waiting..."
-          sleep 3
-        done
-        echo "deepseek service failed to start"
-        exit 1
-
     - name: Run News Fetcher
       env:
         RSS_FEED_URL: ${{ secrets.RSS_FEED_URL }}
