@@ -16,18 +16,18 @@ jobs:
 
     - name: Pull Docker Images
       run: |
-        docker pull rwencik/deepseek
+        docker pull rwencik/summarize-pt
         docker pull rwencik/news
 
     - name: Create a Custom Docker Network
       run: docker network create network
 
-    - name: Start deepseek Service
+    - name: Start Summarization Service
       run: |
-        docker run -d --name deepseek \
+        docker run -d --name summarize_service \
                    --network network \
-                   -p 8000:11434 \
-                   rwencik/deepseek
+                   -p 8000:8000 \
+                   rwencik/summarize-pt
 
     - name: Run News Fetcher
       env:

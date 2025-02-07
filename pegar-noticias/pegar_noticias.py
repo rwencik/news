@@ -12,7 +12,6 @@ from email.mime.multipart import MIMEMultipart
 import feedparser
 from googletrans import Translator
 from bs4 import BeautifulSoup
-import re
 
 # Logging setup
 log_directory = "/app/logs"
@@ -80,9 +79,7 @@ def summarize_text(text):
     if not text or len(text.strip()) == 0:
         return "No content to summarize"
 
-    prompt = f"Summarize and translate to Portuguese: {text} \n\nOutput only the summarized translation, nothing else:"
-
-    ai_service_url = "http://localhost:11434/api/generate"
+    ai_service_url = "http://summarize_service:8000/process-news"
     headers = {"Content-Type": "application/json"}
     
     payload = {
@@ -96,20 +93,10 @@ def summarize_text(text):
     try:
         response = requests.post(ai_service_url, json=payload, headers=headers)
         response.raise_for_status()  # Raise an error for non-200 responses
-
-        result = response.json()
         
-        # Extract the response text
-        if "response" in result:
-            clean_response = result["response"].strip()
-
-            # Remove any unwanted formatting, <think> tags, or markdown formatting
-            clean_response = re.sub(r'<.*?>', '', clean_response)  # Remove any HTML-like tags
-            clean_response = re.sub(r'\*\*(.*?)\*\*', r'\1', clean_response)  # Remove bold markdown
-            clean_response = clean_response.replace('"', '').replace('\n', ' ').strip()  # Clean up text
-
-            return clean_response
-
+        result = response.json()
+        if "brazilian_translation" in result:
+            return result["brazilian_translation"]
         else:
             return "Error: Unexpected response format"
 
