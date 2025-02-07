@@ -83,9 +83,11 @@ def summarize_text(text):
     headers = {"Content-Type": "application/json"}
     
     payload = {
-        "text": text,
-        "max_summary_length": 80,  # Adjust length as needed
-        "min_summary_length": 20
+        "model": "deepseek-r1:8b",
+        "prompt": prompt,
+        "stream": False,  # Ensure this is a boolean, not a string
+        "temperature": 0,
+        "max_tokens": 50
     }
 
     try:

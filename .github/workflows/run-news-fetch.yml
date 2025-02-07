@@ -26,20 +26,6 @@ jobs:
                    -p 8000:8000 \
                    rwencik/summarize-pt
 
-    - name: Wait for Summarization Service to Be Ready
-      run: |
-        echo "Waiting for summarize-pt service to start..."
-        for i in {1..30}; do
-          if curl -s http://localhost:8000/docs > /dev/null; then
-            echo "Summarization service is up!"
-            exit 0
-          fi
-          echo "Waiting..."
-          sleep 3
-        done
-        echo "Summarization service failed to start"
-        exit 1
-
     - name: Run News Fetcher
       env:
         RSS_FEED_URL: ${{ secrets.RSS_FEED_URL }}
